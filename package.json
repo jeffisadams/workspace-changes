@@ -1,6 +1,6 @@
 {
   "name": "yarn-changed",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "How does this not exist yet?",
   "main": "bin/index.js",
   "homepage": "https://github.com/jeffisadams/workspace-changes",
@@ -16,7 +16,8 @@
     "workspaces": "bin/index.js"
   },
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "prepare": "npm run build"
   },
   "author": "Jeff Adams",
   "license": "ISC",
