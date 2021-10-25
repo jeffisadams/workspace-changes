@@ -78,3 +78,24 @@ export const hasChanges = (paths: string | string[], gitPaths: string[]): boolea
   }
   return false
 }
+
+export const getNextDependency = (list: string[], info: ChangesInfo): string => {
+  // Get independent packages and return one
+  const independant = list.filter(ns => info[ns].hasChanges && !info[ns].hasDependencyChanges)
+  if (independant.length > 0) {
+    return independant.shift() as string
+  }
+
+  const dependant = list.filter(ns => info[ns].hasDependencyChanges)
+  if (dependant.length > 0) {
+    const firstDependent = info[dependant[0]]
+    const remainingDependencies = firstDependent.changedDependencies!
+      .filter(ns => list.indexOf(ns) !== -1)
+    if (remainingDependencies.length === 0) {
+      return dependant.shift() as string
+    }
+    return getNextDependency(remainingDependencies , info)
+  }
+
+  return list.shift() as string
+}

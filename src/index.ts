@@ -4,7 +4,7 @@ import { program } from 'commander'
 import { execSync } from 'child_process'
 
 // Local Dependencies
-import { getGlob, getDependencyPaths, getWorkspaceInfo, hasChanges, readJson, WorkspaceInfo } from './lib'
+import { getGlob, getDependencyPaths, getWorkspaceInfo, hasChanges, readJson, WorkspaceInfo, getNextDependency } from './lib'
 
 const DEFAULT_OPTIONS = {
   remote: 'origin',
@@ -101,7 +101,7 @@ program.parse(process.argv);
       changedDependencies = [...changedDependencies?.filter(dep => info[dep].hasChanges || info[dep].hasDependencyChanges) || []]
     })
 
-  const changedPackages = Object.values(info)
+  let changedPackages = Object.values(info)
     // List of changed packages
     .filter(pkg => pkg.hasChanges || pkg.hasDependencyChanges)
     .map(({ name }, i) => {
@@ -109,7 +109,17 @@ program.parse(process.argv);
       info[name].buildOrder = i
       return name
     })
+  
+  const ordered = []
+  while(changedPackages.length > 0 ) {
+    const next = getNextDependency(changedPackages, info)
+    ordered.push(next)
+    changedPackages = changedPackages.filter(ns => ns !== next)
+  }
 
+  // Assign A Build Order to the info object
+  ordered.forEach((ns, i) => info[ns].buildOrder = i)
+  
   // Lots of possibilities for output
   if (options.info) {
     console.log(info)
@@ -117,9 +127,9 @@ program.parse(process.argv);
   }
 
   if (options.json) {
-    console.log(JSON.stringify(changedPackages))
+    console.log(JSON.stringify(ordered))
   } else {
-    console.log(changedPackages.join('\n'))
+    console.log(ordered.join('\n'))
   }
 })()
   .catch((err: Error) => {
