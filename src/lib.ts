@@ -68,7 +68,6 @@ export const hasChanges = (paths: string | string[], gitPaths: string[]): boolea
     const testPath = gitPaths[i]
     const hasPath = paths.some((path) => {
       if (testPath.indexOf(path) !== -1) {
-        console.log(`hit on ${testPath} for ${path}`)
         return true
       }
     })
@@ -78,40 +77,4 @@ export const hasChanges = (paths: string | string[], gitPaths: string[]): boolea
     }
   }
   return false
-}
-
-
-export const getIndependant = (list: string[], info: ChangesInfo): string[] => {
-  const allDeps: string[] = []
-  Object.values(info).forEach(({ changedDependencies }) => {
-    allDeps.push(...changedDependencies || [])
-  })
-  return list.filter(ns => allDeps.indexOf(ns) === -1)
-}
-
-export const getFirstDependency = (list: string[], info: ChangesInfo): string => {
-  
-  // Path where there are dependencies with no depenencies
-  const foundationCandidates: string[] = Object.values(info)
-  .filter(({ name, hasChanges, hasDependencyChanges }) => list.indexOf(name) !== -1 && hasChanges && !hasDependencyChanges)
-  .map(({ name }) => name)
-  
-  if (foundationCandidates.length > 0) {
-    return foundationCandidates.shift() as string
-  } else {
-    let first = list[0]
-    list.forEach(ns => {
-      const { name, changedDependencies } = info[ns]
-      
-    })
-    console.log('no independant libs')
-    return first
-    // // Now the real work
-    // console.log('no foundation')
-    // const changed = Object.values(info)
-    //   .filter(({ name, hasChanges }) => list.indexOf(name) !== -1 && (hasChanges))
-    //   .map(({ name }) => name)
-    // console.log(changed)
-    // return changed.shift()as string
-  }
 }

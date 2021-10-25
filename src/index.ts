@@ -1,12 +1,19 @@
 #!/usr/bin/env node
 
-import { red } from 'chalk'
-import { textSync } from 'figlet'
 import { program } from 'commander'
 import { execSync } from 'child_process'
 
 // Local Dependencies
-import { getGlob, getDependencyPaths, getWorkspaceInfo, hasChanges, readJson, WorkspaceInfo, getIndependant, getFirstDependency } from './lib'
+import { getGlob, getDependencyPaths, getWorkspaceInfo, hasChanges, readJson, WorkspaceInfo } from './lib'
+
+const DEFAULT_OPTIONS = {
+  remote: 'origin',
+  branch: undefined,
+  package: './package.json',
+  info: false,
+  json: false,
+  help: false,
+}
 
 // Program config
 program
@@ -15,28 +22,41 @@ program
 
 // Init Program Options
 program
-  .option('-p, --package', 'path to root package.json', './package.json')
-  .option('-r, --ref', 'Github Sha to compar it from')
+  .option('-b, --branch', 'Branch to compare for changes')
+  .option('-remote, --remote', 'Github Remote if it is not origin')
+  .option('-r, --ref', 'Github Sha to compare it from')
+  .option('-p, --package', 'path to root package.json')
+  .option('-i, --info', 'Show verbose workspace info', false)
+  .option('-j, --json', 'Output as json', false)
 
 // Package the program cli config
 program.parse(process.argv);
 
-
+// Primary Project Run
 (async function () {
-  const options = program.opts()
-  if (options.help) {
-    console.log(red(textSync('Workspace Changes')))
+  const options = {
+    ...DEFAULT_OPTIONS,
+    ...program.opts()
   }
+
   const manifest = readJson(options.package || './package.json')
-  // console.log(manifest)
 
   if (!manifest.workspaces) {
     throw new Error('There aren\'t any workspaces to search')
   }
 
+  let sha
+  // If a branch is passed, then get the sha of that branch
+  if (options.branch) {
+    sha = await execSync(`git rev-parse ${options.remote}/${options.branch}`).toString('utf-8')
+  } else {
+    const defaultBranch =  await execSync(`git remote show ${options.remote} | sed -n '/HEAD branch/s/.*: //p'`).toString('utf-8')
+    sha = await execSync(`git rev-parse ${options.remote}/${defaultBranch}`).toString('utf-8')
+  }
+
   // Get list of all changes as an array
   // Add in an optional reference point
-  const changes = await execSync('git diff --name-only')
+  const changes = await execSync(`git diff --name-only ${sha}`)
     .toString('utf-8')
     .split("\n")
 
@@ -55,6 +75,8 @@ program.parse(process.argv);
 
   // Build Workspace info object.
   // We can't really compare dependencies until this is build once
+  // TODO: There are a couple iterations through the array for this reason
+  // Something certainly worth improving upon
   const info: Record<string, WorkspaceInfo> = {}
   manifests.forEach((workspaceManifestPath) => {
     const workspaceInfo = getWorkspaceInfo(workspaceManifestPath)
@@ -73,7 +95,13 @@ program.parse(process.argv);
       info[name].changedDependencies = (info[name].changedDependencies || []).filter(dep => namespaces.find(ns => ns === dep))
     })
 
-  let changedPackages = Object.values(info)
+  // Now filter dependencies to only the list that have changes
+  Object.values(info)
+    .forEach(({ changedDependencies }) => {
+      changedDependencies = [...changedDependencies?.filter(dep => info[dep].hasChanges || info[dep].hasDependencyChanges) || []]
+    })
+
+  const changedPackages = Object.values(info)
     // List of changed packages
     .filter(pkg => pkg.hasChanges || pkg.hasDependencyChanges)
     .map(({ name }, i) => {
@@ -83,36 +111,16 @@ program.parse(process.argv);
     })
 
   // Lots of possibilities for output
-  console.log(info)
-  console.log(changedPackages)
-
-  const firstFirst = getFirstDependency(changedPackages, info)
-  const secondFirst = getFirstDependency(changedPackages.filter(ns => ns !== firstFirst), info)
-
-  console.log(firstFirst)
-  console.log(secondFirst)
-
-  // const changedOrderedPackages = changedPackages.reduce((prevList, currentInfo) => {
-  //   console.log(prevList)
-  //   const first = 
-  //   console.log(first)
-  //   return prevList.filter(ns => ns !== first)
-  // }, [...changedPackages]])
-
-  const ordered = []
-  while (changedPackages.length > 0) {
-    const first = getFirstDependency(changedPackages, info)
-    console.log(first)
-    console.log(`${first} =>\n\t ${info[first]?.changedDependencies?.join('\n\t')}`)
-    ordered.unshift(first)
-    changedPackages = changedPackages.filter(ns => first.indexOf(ns) === -1)
+  if (options.info) {
+    console.log(info)
+    return
   }
 
-  console.log(ordered)
-
-  // while (changedPackages.length > 0) {
-  //   const first = getFirstDependency(changedPackages, info)
-  // }
+  if (options.json) {
+    console.log(JSON.stringify(changedPackages))
+  } else {
+    console.log(changedPackages.join('\n'))
+  }
 })()
   .catch((err: Error) => {
     console.log('error')
