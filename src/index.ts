@@ -117,12 +117,16 @@ program.parse(process.argv);
     changedPackages = changedPackages.filter(ns => ns !== next)
   }
 
-  // Assign A Build Order to the info object
-  ordered.forEach((ns, i) => info[ns].buildOrder = i)
-  
+  // Order The change info into a 
+  const orderedInfo = ordered.map((ns, i) => {
+    info[ns].buildOrder = i
+    const currentInfo = info[ns]
+    return currentInfo
+  })
+
   // Lots of possibilities for output
   if (options.info) {
-    console.log(info)
+    console.log(orderedInfo)
     return
   }
 
