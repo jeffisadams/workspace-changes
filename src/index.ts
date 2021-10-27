@@ -126,7 +126,7 @@ program.parse(process.argv);
 
   // Lots of possibilities for output
   if (options.info) {
-    console.log(orderedInfo)
+    console.log(JSON.stringify(orderedInfo))
     return
   }
 
