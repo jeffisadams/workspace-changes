@@ -7,6 +7,7 @@ export type ChangesInfo = Record<string, WorkspaceInfo>
 export interface WorkspaceInfo {
   name: string
   path: string
+  namespace: string
   buildOrder: number
   hasChanges: boolean
   hasDependencyChanges: boolean
@@ -42,6 +43,7 @@ export const getWorkspaceInfo = (packagePath: string): WorkspaceInfo => {
   return {
     path,
     name: pkg.name,
+    namespace: pkg.name.split('/').pop(),
     buildOrder: -1,
     hasChanges: false,
     hasDependencyChanges: false,
