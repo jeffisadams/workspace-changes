@@ -6,15 +6,6 @@ import { execSync } from 'child_process'
 // Local Dependencies
 import { getGlob, getDependencyPaths, getWorkspaceInfo, hasChanges, readJson, WorkspaceInfo, getNextDependency } from './lib'
 
-const DEFAULT_OPTIONS = {
-  remote: 'origin',
-  branch: undefined,
-  package: './package.json',
-  info: false,
-  json: false,
-  help: false,
-}
-
 // Program config
 program
   .description('Get the ordered list of which workspaces have changed since the reference commit')
@@ -22,10 +13,10 @@ program
 
 // Init Program Options
 program
-  .option('-b, --branch', 'Branch to compare for changes')
-  .option('-remote, --remote', 'Github Remote if it is not origin')
-  .option('-r, --ref', 'Github Sha to compare it from')
-  .option('-p, --package', 'path to root package.json')
+  .option('-b, --branch <value>', 'Branch to compare for changes', 'main')
+  .option('-remote, --remote <value>', 'Github Remote if it is not origin', 'origin')
+  .option('-r, --ref <value>', 'Github Sha to compare it from')
+  .option('-p, --package <value>', 'path to root package.json', './package.json')
   .option('-i, --info', 'Show verbose workspace info', false)
   .option('-j, --json', 'Output as json', false)
 
@@ -34,20 +25,19 @@ program.parse(process.argv);
 
 // Primary Project Run
 (async function () {
-  const options = {
-    ...DEFAULT_OPTIONS,
-    ...program.opts()
-  }
+  const options = program.opts()
 
-  const manifest = readJson(options.package || './package.json')
+  const manifest = readJson(options.package)
 
-  if (!manifest.workspaces) {
+  if (!manifest?.workspaces) {
     throw new Error('There aren\'t any workspaces to search')
   }
 
   let sha
   // If a branch is passed, then get the sha of that branch
-  if (options.branch) {
+  if(options.ref) {
+    sha = options.ref
+  } else if (options.branch) {
     sha = await execSync(`git rev-parse ${options.remote}/${options.branch}`).toString('utf-8')
   } else {
     const defaultBranch =  await execSync(`git remote show ${options.remote} | sed -n '/HEAD branch/s/.*: //p'`).toString('utf-8')
@@ -60,9 +50,8 @@ program.parse(process.argv);
     .toString('utf-8')
     .split("\n")
 
-
   // Traverse workspaces and get all nested workspace package.json files
-  const workspaces: string[] = manifest?.workspaces?.packages
+  const workspaces: string[] = manifest?.workspaces
   let manifests: string[] = []
 
   for (let i in workspaces) {
