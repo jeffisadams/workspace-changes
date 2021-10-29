@@ -13,9 +13,7 @@ program
 
 // Init Program Options
 program
-  .option('-b, --branch <value>', 'Branch to compare for changes', 'main')
-  .option('-remote, --remote <value>', 'Github Remote if it is not origin', 'origin')
-  .option('-r, --ref <value>', 'Github Sha to compare it from')
+  .option('-r, --ref <value>', 'Github ref to compare from.  Can be `ref/tags/<tag>` or `<branch>` or `12345678987654321`')
   .option('-p, --package <value>', 'path to root package.json', './package.json')
   .option('-i, --info', 'Show verbose workspace info', false)
   .option('-j, --json', 'Output as json', false)
@@ -34,13 +32,11 @@ program.parse(process.argv);
   }
 
   let sha
-  // If a branch is passed, then get the sha of that branch
+  // If a Reference is passed, then get the sha of that reference
   if(options.ref) {
-    sha = options.ref
-  } else if (options.branch) {
-    sha = await execSync(`git rev-parse ${options.remote}/${options.branch}`).toString('utf-8')
+    sha = await execSync(`git rev-parse ${options.ref}`).toString('utf-8')
   } else {
-    const defaultBranch =  await execSync(`git remote show ${options.remote} | sed -n '/HEAD branch/s/.*: //p'`).toString('utf-8')
+    const defaultBranch =  await execSync(`git remote show origin | sed -n '/HEAD branch/s/.*: //p'`).toString('utf-8')
     sha = await execSync(`git rev-parse ${options.remote}/${defaultBranch}`).toString('utf-8')
   }
 
