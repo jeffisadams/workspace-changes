@@ -12,12 +12,10 @@ Usage: workspaces [options]
 Get the ordered list of which workspaces have changed since the reference commit
 
 Options:
-  -V, --version      output the version number
-  -b, --branch       Branch to compare for changes
-  -remote, --remote  Github Remote if it is not origin
-  -r, --ref          Github Sha to compare it from
-  -p, --package      path to root package.json
-  -i, --info         Show verbose workspace info (default: false)
-  -j, --json         Output as json (default: false)
-  -h, --help         display help for command
+  -V, --version          output the version number
+  -r, --ref <value>      Github ref to compare from.  Can be `ref/tags/<tag>` or `<branch>` or `12345678987654321`
+  -p, --package <value>  path to root package.json (default: "./package.json")
+  -i, --info             Show verbose workspace info (default: false)
+  -j, --json             Output as json (default: false)
+  -h, --help             display help for command
 ```
