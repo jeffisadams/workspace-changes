@@ -37,7 +37,7 @@ program.parse(process.argv);
     sha = await execSync(`git rev-parse ${options.ref}`).toString('utf-8')
   } else {
     const defaultBranch =  await execSync(`git remote show origin | sed -n '/HEAD branch/s/.*: //p'`).toString('utf-8')
-    sha = await execSync(`git rev-parse ${options.remote}/${defaultBranch}`).toString('utf-8')
+    sha = await execSync(`git rev-parse origin/${defaultBranch}`).toString('utf-8')
   }
 
   // Get list of all changes as an array
