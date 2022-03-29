@@ -9,7 +9,7 @@ import { getGlob, getDependencyPaths, getWorkspaceInfo, hasChanges, readJson, Wo
 // Program config
 program
   .description('Get the ordered list of which workspaces have changed since the reference commit')
-  .version('0.0.1')
+  .version('1.0.0')
 
 // Init Program Options
 program
@@ -33,10 +33,10 @@ program.parse(process.argv);
 
   let sha
   // If a Reference is passed, then get the sha of that reference
-  if(options.ref) {
+  if (options.ref) {
     sha = await execSync(`git rev-parse ${options.ref}`).toString('utf-8')
   } else {
-    const defaultBranch =  await execSync(`git remote show origin | sed -n '/HEAD branch/s/.*: //p'`).toString('utf-8')
+    const defaultBranch = await execSync(`git remote show origin | sed -n '/HEAD branch/s/.*: //p'`).toString('utf-8')
     sha = await execSync(`git rev-parse origin/${defaultBranch}`).toString('utf-8')
   }
 
@@ -49,12 +49,11 @@ program.parse(process.argv);
   // Traverse workspaces and get all nested workspace package.json files
   const workspaces: string[] = manifest?.workspaces
   let manifests: string[] = []
-
   for (let i in workspaces) {
     const workspaceFiles = await getGlob(`${workspaces[i]}/*`)
     manifests = [
       ...manifests,
-      ...workspaceFiles.filter(v => v.indexOf('package.json') !== -1)
+      ...workspaceFiles.filter(v => v.indexOf('/package.json') !== -1)
     ]
   }
 
@@ -94,9 +93,9 @@ program.parse(process.argv);
       info[name].buildOrder = i
       return name
     })
-  
+
   const ordered = []
-  while(changedPackages.length > 0 ) {
+  while (changedPackages.length > 0) {
     const next = getNextDependency(changedPackages, info)
     ordered.push(next)
     changedPackages = changedPackages.filter(ns => ns !== next)
