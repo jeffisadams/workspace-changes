@@ -9,7 +9,7 @@ import { getGlob, getDependencyPaths, getWorkspaceInfo, hasChanges, readJson, Wo
 // Program config
 program
   .description('Get the ordered list of which workspaces have changed since the reference commit')
-  .version('1.0.0')
+  .version('1.1.0')
 
 // Init Program Options
 program
@@ -74,6 +74,13 @@ program.parse(process.argv);
   Object.values(info)
     .forEach(({ name, path }) => {
       const dependencyPaths = getDependencyPaths(name, info)
+      
+      // Specific check to ensure we don't include the workspace as it's own dependency
+      // basically I got bit by that so let's throw an error
+      if (dependencyPaths.indexOf(path) !== -1) {
+        throw new Error(`${name} lists itself as a dependency`)
+      }
+
       info[name].hasChanges = hasChanges(path, changes)
       info[name].hasDependencyChanges = hasChanges(dependencyPaths, changes)
       info[name].changedDependencies = (info[name].changedDependencies || []).filter(dep => namespaces.find(ns => ns === dep))
