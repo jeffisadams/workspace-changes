@@ -30,7 +30,6 @@ export const readJson = (path: string): Record<string, any> => {
   return JSON.parse(readFileSync(path, { encoding: 'utf8' }))
 }
 
-
 export const getWorkspacePath = (manifestPath: string): string => {
   const parts = manifestPath.split('/')
   parts.pop()
@@ -82,7 +81,7 @@ export const hasChanges = (paths: string | string[], gitPaths: string[]): boolea
 }
 
 export const getNextDependency = (list: string[], info: ChangesInfo): string => {
-  // Get independent packages and return one
+  // Get independent packages and return ones
   const independant = list.filter(ns => info[ns].hasChanges && !info[ns].hasDependencyChanges)
   if (independant.length > 0) {
     return independant.shift() as string
